@@ -48,11 +48,11 @@ app.post("/register", async (request, response) => {
       const dbResponse = await db.run(createQuery);
       response.send("User created successfully");
     } else {
-      request.status = 400;
+      response.status(400);
       response.send("Password is too short");
     }
   } else {
-    response.status = 400;
+    response.status(400);
     response.send("User already exists");
   }
 });
@@ -68,13 +68,13 @@ app.post("/login", async (request, response) => {
   if (result !== undefined) {
     const isPasswordMatched = await bcrypt.compare(password, result.password);
     if (isPasswordMatched === true) {
-      response.send("Login Success!");
+      response.send("Login success!");
     } else {
       response.status(400);
-      response.send("Invalid Password");
+      response.send("Invalid password");
     }
   } else {
-    response.status = 400;
+    response.status(400);
     response.send("Invalid user");
   }
 });
@@ -88,26 +88,34 @@ app.put("/change-password", async (request, response) => {
      username = '${username}';`;
   const result = await db.get(getUser);
 
-  const isPasswordMatched = await bcrypt.compare(oldPassword, result.password);
-  if (isPasswordMatched) {
-    if (request.body.newPassword.length > 4) {
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      const updateQuery = `
+  if (result === undefined) {
+    response.status(400);
+    response.send("Invalid user");
+  } else {
+    const isPasswordMatched = await bcrypt.compare(
+      oldPassword,
+      result.password
+    );
+    if (isPasswordMatched) {
+      if (newPassword.length < 5) {
+        response.status(400);
+        response.send("Password is too short");
+      } else {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const updateQuery = `
                  UPDATE user 
                  SET
                  password = '${hashedPassword}'
                  WHERE 
-                 username = '${result}';
+                 username = '${username}';
              `;
-      const userResponse = await db.run(updateQuery);
-      response.send("Password updated");
+        const userResponse = await db.run(updateQuery);
+        response.send("Password updated");
+      }
     } else {
-      response.status = 400;
-      response.send("Password is too short");
+      response.status(400);
+      response.send("Invalid current password");
     }
-  } else {
-    response.status = 400;
-    response.send("Invalid current password");
   }
 });
 
