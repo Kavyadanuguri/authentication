@@ -101,11 +101,11 @@ app.put("/change-password", async (request, response) => {
         response.status(400);
         response.send("Password is too short");
       } else {
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const hashPassword = await bcrypt.hash(newPassword, 10);
         const updateQuery = `
                  UPDATE user 
                  SET
-                 password = '${hashedPassword}'
+                 password = '${hashPassword}'
                  WHERE 
                  username = '${username}';
              `;
